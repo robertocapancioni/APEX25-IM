@@ -1,5 +1,5 @@
-merge into d18_vendita d
-         using d17_vendita s
+merge into d03_vendita2 d
+         using d03_vendita s
             on (    s.data     = d.data 
                 and s.prodotto = d.prodotto
                 and s.cliente  = d.cliente
@@ -16,7 +16,7 @@ merge into d18_vendita d
           insert (d.data,d.prodotto,d.cliente,d.zona_cliente,d.quantita,d.importo)
           values (s.data,s.prodotto,s.cliente,s.zona_cliente,s.quantita,s.importo);
   
- merge into d18_vendita d
+ merge into d03_vendita2 d
          using (select  
                  trunc(sysdate) data,
                          'Pane' prodotto,
@@ -38,8 +38,8 @@ merge into d18_vendita d
           insert (d.data,d.prodotto,d.cliente,d.zona_cliente,d.quantita,d.importo)
           values (s.data,s.prodotto,s.cliente,s.zona_cliente,s.quantita,s.importo);
 
-    merge into d18_vendita d
-         using d17_vendita s
+    merge into d03_vendita2 d
+         using d03_vendita s
             on (    s.data     = d.data 
                 and s.prodotto = d.prodotto
                 and s.cliente  = d.cliente
@@ -56,8 +56,8 @@ merge into d18_vendita d
           values (s.data,s.prodotto,s.cliente,s.zona_cliente,s.quantita,s.importo)
            where s.importo < 100;
 
-    merge into d18_vendita d
-         using d17_vendita s
+    merge into d03_vendita2 d
+         using d03_vendita s
             on (    s.data     = d.data 
                 and s.prodotto = d.prodotto
                 and s.cliente  = d.cliente
@@ -72,8 +72,8 @@ merge into d18_vendita d
           insert (d.data,d.prodotto,d.cliente,d.zona_cliente,d.quantita,d.importo)
           values (s.data,s.prodotto,s.cliente,s.zona_cliente,s.quantita,s.importo);
           
-    merge into d18_vendita d
-         using d17_vendita s
+    merge into d03_vendita2 d
+         using d03_vendita s
             on (    s.data     = d.data 
                 and s.prodotto = d.prodotto
                 and s.cliente  = d.cliente
@@ -90,11 +90,11 @@ merge into d18_vendita d
           values (s.data,s.prodotto,s.cliente,s.zona_cliente,s.quantita,s.importo)
            where s.importo < 100;
 
-create unique index d18_vendita_uq1
-    on d18_vendita (data,prodotto,cliente);
+create unique index d03_vendita2_uq1
+    on d03_vendita2 (data,prodotto,cliente);
 
 begin
-   DBMS_STATS.GATHER_TABLE_STATS(null, 'D17_VENDITA');
-   DBMS_STATS.GATHER_TABLE_STATS(null, 'D18_VENDITA');
+   DBMS_STATS.GATHER_TABLE_STATS(null, 'd03_vendita');
+   DBMS_STATS.GATHER_TABLE_STATS(null, 'd03_vendita2');
 end;
 
