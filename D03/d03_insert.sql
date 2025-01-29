@@ -21,3 +21,7 @@ insert into EMP ( EMPNO
                  ,1500
                  ,null
                  , (select DEPTNO from DEPT where DNAME='ACCOUNTING')); 
+
+
+create table EMP2 as
+select * from EMP where job='ANALYST'
