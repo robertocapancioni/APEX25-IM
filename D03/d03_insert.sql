@@ -24,4 +24,7 @@ insert into EMP ( EMPNO
 
 
 create table EMP2 as
-select * from EMP where job='ANALYST'
+select * from EMP where job='ANALYST';
+
+insert into emp (EMPNO,ENAME,JOB,MGR,HIREDATE)
+select EMPNO+150 EMPNO,ENAME,JOB,MGR,HIREDATE from emp2;
