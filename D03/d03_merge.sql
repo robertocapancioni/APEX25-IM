@@ -3,6 +3,9 @@ create table d03_vendita2 as
 select DATA,PRODOTTO,CLIENTE,ZONA_CLIENTE,QUANTITA,IMPORTO from d03_vendita order by id fetch next 2 rows only;
 
 
+alter table d03_vendita2 add constraint
+d03_vendita2_con primary key ( data, prodotto, cliente );
+
 merge into d03_vendita2 d
          using d03_vendita s
             on (    s.data     = d.data 
