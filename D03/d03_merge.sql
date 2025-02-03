@@ -1,5 +1,7 @@
+
 create table d03_vendita2 as
-select * from d03_vendita order by id fetch next 2 rows only;
+select DATA,PRODOTTO,CLIENTE,ZONA_CLIENTE,QUANTITA,IMPORTO from d03_vendita order by id fetch next 2 rows only;
+
 
 merge into d03_vendita2 d
          using d03_vendita s
