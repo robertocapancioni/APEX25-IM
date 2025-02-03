@@ -1,3 +1,6 @@
+create table d03_vendita2 as
+select * from d03_vendita order by id fetch next 2 rows only;
+
 merge into d03_vendita2 d
          using d03_vendita s
             on (    s.data     = d.data 
