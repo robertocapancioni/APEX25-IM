@@ -123,7 +123,7 @@ end;
 
 
 -----------------------------------------------------------------------
-create or replace procedure d06_get_venduto 
+create or replace procedure d06_venduto 
                   ( 
                    p_venduto in number default 0
                   )
@@ -190,7 +190,7 @@ end;
 
 ------------------------------------------------------------
 
-create or replace procedure d06_get_venduto 
+create or replace procedure d06_venduto 
                 (
                  p_venduto in number default 0,
                  p_venduto_txt out varchar2
