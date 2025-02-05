@@ -123,7 +123,7 @@ end;
 
 
 -----------------------------------------------------------------------
-create or replace procedure d06_venduto 
+create or replace procedure d06_get_venduto 
                   ( 
                    p_venduto in number default 0
                   )
