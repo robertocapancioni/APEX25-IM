@@ -33,7 +33,7 @@ begin
     into l_data
     from dual;
 
-  dbms_output.put_line(to_char(l_data,'DD/MM/YYYY HH24:MM:SS'));
+  dbms_output.put_line(to_char(l_data,'DD/MM/YYYY HH24:MI:SS'));
 end;
 /
 
