@@ -23,7 +23,7 @@ select targa,
          lead(km_progr) over(partition by targa 
                                  order by data  ) km_progr_successivi
     from d04_carburante
-order by targa,data;
+order by targa,data,km_progr;
 
 with carburante as(
                select targa,
@@ -45,7 +45,7 @@ with carburante as(
               else 0
           end km_medi_litro
      from carburante
- order by targa,data
+ order by targa,data,km_progr
 
 select targa,
        data,
