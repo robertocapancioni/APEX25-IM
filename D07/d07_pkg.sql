@@ -1,17 +1,3 @@
-create or replace package d07_pkg is
-
-function get_vendita (
-                      p_cliente_id   in number default null,
-                      p_prodotto_id  in number default null
-                    ) return clob sql_macro;
-
-function get_acquisto (
-                      p_fornitore_id in number default null,
-                      p_prodotto_id  in number default null
-                    ) return clob sql_macro;
-end d07_pkg;
-/
-
 create or replace package body d07_pkg is
 
 function get_vendita (
@@ -29,7 +15,8 @@ begin
                 p.tipo_prodotto_id,
                 tp.tipo_prodotto,
                 v.data,
-                v.quantita
+                v.quantita,
+                v.quantita*p.prezzo_vendita importo
             from d07_vendita v
             join d07_cliente c on v.cliente_id = c.id
             join d07_prodotto p on v.prodotto_id = p.id
@@ -54,7 +41,8 @@ begin
                     p.tipo_prodotto_id,
                     tp.tipo_prodotto,
                     a.data,
-                    a.quantita
+                    a.quantita,
+                    a.quantita*p.prezzo_acquisto importo
                 from d07_acquisto a
                 join d07_fornitore f on a.fornitore_id = f.id
                 join d07_prodotto p on a.prodotto_id = p.id
