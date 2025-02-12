@@ -31,3 +31,12 @@ BEGIN
    CLOSE c_emps; 
 END; 
 /
+
+begin
+for c_emp in (SELECT EMPNO, ENAME, JOB FROM emp)
+loop
+   dbms_output.put_line(c_emp.EMPNO || ' ' || c_emp.ENAME || ' ' || c_emp.JOB); 
+end loop;
+
+end;
+/
