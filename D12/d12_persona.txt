@@ -1,0 +1,4 @@
+persona
+  nome vc20 /nn /unique
+  foto file
+#settings{prefix:d12}
