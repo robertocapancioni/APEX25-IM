@@ -37,9 +37,6 @@ tipo documento
     categoria vc100
 
 
-
-
- Non-default options:
 # settings = {"apex":true,"db":"19c","drop":true,"prefix":"d13","pk":"IDENTITY"}
 
 */
