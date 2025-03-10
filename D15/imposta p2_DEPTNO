@@ -1,1 +1,1 @@
-apex.item("P2_DEPTNO").setValue= $(this.triggeringElement).attr('data-id');
+apex.item("P2_DEPTNO").setValue($(this.triggeringElement).attr('data-id'));
