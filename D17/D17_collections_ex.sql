@@ -11,7 +11,7 @@ if not apex_collection.collection_exists('FATTURA_CL') then
                    codice_cliente,
                    ragione_sociale,
                    piva
-              from d08_fattura_vw )
+              from d16_fattura_vw )
   loop
     apex_collection.add_member(p_collection_name=>'FATTURA_CL'
                               ,p_n001 => r.anno
