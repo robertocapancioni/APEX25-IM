@@ -1,11 +1,17 @@
-create or replace editionable trigger  d13_tipo_documento_biu 
-    before insert or update  
+CREATE OR REPLACE EDITIONABLE TRIGGER "D13_TIPO_DOCUMENTO_BIU" 
+    before insert or update 
     on d13_tipo_documento 
     for each row 
 begin 
- if :new.tipo_documento like '% %' then
-     raise_application_error(-20001,'Il tipo tipo_documento non può contenere spazi');
- end if;
+     if :new.tipo_documento like '% %' then
+          raise_application_error(-20001,'Il tipo tipo_documento non può contenere spazi');
+     end if;
+    if inserting then 
+        :new.created := sysdate; 
+        :new.created_by := coalesce(sys_context('APEX$SESSION','APP_USER'),user); 
+    end if; 
+    :new.updated := sysdate; 
+    :new.updated_by := coalesce(sys_context('APEX$SESSION','APP_USER'),user); 
 end d13_tipo_documento_biu; 
 /
 
