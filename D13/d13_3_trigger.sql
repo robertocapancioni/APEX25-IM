@@ -16,8 +16,8 @@ end d13_tipo_documento_biu;
 /
 
 
-create or replace editionable trigger  d13_tipo_documento_biu 
-    before insert or update  
+create or replace TRIGGER "D13_TIPO_DOCUMENTO_BIU" 
+    before insert or update 
     on d13_tipo_documento 
     for each row 
 declare
@@ -28,5 +28,11 @@ begin
     --l_rec.prezzo        := :new.prezzo;
 
     d13_vld.tipo_documento(p_rec => l_rec);
-end d13_tipo_documento_biu; 
+    if inserting then 
+        :new.created := sysdate; 
+        :new.created_by := coalesce(sys_context('APEX$SESSION','APP_USER'),user); 
+    end if; 
+    :new.updated := sysdate; 
+    :new.updated_by := coalesce(sys_context('APEX$SESSION','APP_USER'),user); 
+end d13_tipo_documento_biu;
 /
