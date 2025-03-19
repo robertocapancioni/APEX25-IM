@@ -5,6 +5,29 @@ INSERT INTO d18_persona (Nome, Cognome, telefono, email,data_nascita)
                  p_add_headers_row => 'Y',
                  p_file_name => 'dummy.xlsx'
              )) p
-        WHERE f.name = :P1_FILE1
+        WHERE f.name = :P1_FILE
         and p.col001<>'Nome'
+        LOG ERRORS INTO d18_persona_err$ REJECT LIMIT UNLIMITED;
+
+
+INSERT INTO d18_persona (Nome, Cognome, telefono, email,data_nascita)
+        SELECT p.col001,p.col002,p.col003,p.line_number,null from apex_application_temp_files f,
+             TABLE(apex_data_parser.parse(
+                 p_content => f.blob_content,
+                 p_add_headers_row => 'Y',
+                 p_file_name => 'dummy.xlsx'
+             )) p
+        WHERE f.name = :P1_FILE
+        and f.application_id = :APP_ID 
+        and p.col001<>'Nome'
+        and p.line_number >
+        (SELECT pp.line_number from apex_application_temp_files ff,
+             TABLE(apex_data_parser.parse(
+                 p_content => ff.blob_content,
+                 p_add_headers_row => 'Y',
+                 p_file_name => 'dummy.xlsx'
+             )) pp
+        WHERE ff.name = :P1_FILE
+        and ff.application_id = :APP_ID 
+        and pp.col001='Nome' )
         LOG ERRORS INTO d18_persona_err$ REJECT LIMIT UNLIMITED;
