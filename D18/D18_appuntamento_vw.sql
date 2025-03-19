@@ -1,3 +1,4 @@
+create or replace view D18_APPUNTAMENTO_VW as
 select 
       a.ID,
       a.DATA_INIZIO,
