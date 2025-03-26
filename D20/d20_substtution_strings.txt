@@ -1,0 +1,1 @@
+https://docs.oracle.com/en/database/oracle/apex/24.2/htmdb/using-available-built-in-substitution-strings.html#GUID-34118202-1B85-4D38-8C27-F819679504DB
