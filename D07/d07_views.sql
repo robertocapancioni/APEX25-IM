@@ -16,3 +16,7 @@ select a.id,
   join d07_tipo_prodotto tp on p.tipo_prodotto_id = tp.id;
 
   
+create or replace view d07_tipo_prodotto_vw as
+select p.ID,p.TIPO_PRODOTTO_ID,p.PRODOTTO,p.PREZZO_ACQUISTO,p.PREZZO_VENDITA,tp.TIPO_PRODOTTO,GRUPPO
+  from d07_prodotto p
+  join d07_tipo_prodotto tp on p.tipo_prodotto_id = tp.id ;
