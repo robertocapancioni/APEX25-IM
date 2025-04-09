@@ -1,0 +1,14 @@
+Introduzione SQL
+https://www.youtube.com/watch?v=C8SdNxcbZ1s
+
+Oracle APEX servizi REST e PowerBI
+https://www.youtube.com/watch?v=kDXbBjl33T0
+
+Migliorare i cruscotti in APEX con le viste parametriche (Macro SQL)
+https://www.youtube.com/watch?v=rSV6qGErTJE
+
+Partiamo dai dati Pentaho, APEX e PowerBI
+https://www.youtube.com/watch?v=5CMBbzumIaM
+
+BACK TO FORMS Da Forms a Oracle APEX 24/01/2025
+https://www.youtube.com/watch?v=pbExb_PgjYI
