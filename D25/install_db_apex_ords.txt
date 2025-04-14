@@ -297,7 +297,7 @@ https://static.oracle.com/cdn/apex/24.2.4/
 -------------------------------------------------------------------
 
 java 17
-https://mega.nz/file/RV4iUKyY#u3rSZEaOHhl93A_-YGNjUkctcAxYziW1PplVu18-jLE
+https://mega.nz/file/kUZXkZxI#W707F1ciSEvousLrSSIHW8IPcUyVBqAP4oES4NvXuiQ
 
 root
 cd /tmp
