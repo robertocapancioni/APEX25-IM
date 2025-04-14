@@ -1,0 +1,374 @@
+
+wget https://yum.oracle.com/ISOS/OracleLinux/OL9/u5/x86_64/OracleLinux-R9-U5-x86_64-dvd.iso
+lingua it
+fuso orario roma
+root oracle
+oracle oracle
+192.168.1.239/24 192.168.1.1 192.168.1.1 bridge
+2 cpu
+50gb disco
+accetta licenza
+abilitare connessione rete graficamente da impostazioni rete connettere automaticamente
+
+
+sudo su -
+
+firewall-cmd --permanent --new-service=tomcat
+firewall-cmd --permanent --service=tomcat --set-short="Tomcat" --add-port=8080/tcp
+firewall-cmd --permanent --new-service=oracle-db
+firewall-cmd --permanent --service=oracle-db --set-short="Oracle Database Listener" --add-port=1521/tcp
+firewall-cmd --permanent --zone=public --add-service=http
+firewall-cmd --permanent --zone=public --add-service=https
+firewall-cmd --permanent --zone=public --add-service=oracle-db
+firewall-cmd --permanent --zone=public --add-service=tomcat
+firewall-cmd --reload
+
+firewall-cmd --zone=public --list-all
+
+
+
+/*
+yum install tomcat -y
+systemctl start tomcat
+systemctl enable tomcat
+nano /usr/lib/systemd/system/tomcat.service
+-- add After=syslog.target network.target /etc/rc5.d/S80oracle-free-23ai
+--/etc/init.d/oracle-free-23ai
+*/
+
+
+systemctl start chronyd
+systemctl enable chronyd
+
+echo 'tmpfs                   /dev/shm                tmpfs   size=2g        0 0' >> /etc/fstab
+
+nano /etc/sysconfig/selinux
+-- change SELINUX=enforcing to SELINUX=disabled
+
+cd /tmp 
+wget https://yum.oracle.com/repo/OracleLinux/OL9/appstream/x86_64/getPackage/oracle-database-preinstall-23ai-1.0-2.el9.x86_64.rpm
+dnf install -y oracle-database-preinstall-23ai*
+
+wget https://download.oracle.com/otn-pub/otn_software/db-free/oracle-database-free-23ai-1.0-1.el9.x86_64.rpm
+
+dnf install -y oracle-database-free-23ai*
+
+
+/etc/init.d/oracle-free-23ai configure
+sys system pdbadmin Oracle123
+
+root
+echo 'ORACLE_SID=FREE' >> /etc/profile.d/oraenv.sh
+echo 'ORAENV_ASK=NO' >> /etc/profile.d/oraenv.sh
+echo 'ORACLE_HOME=/opt/oracle/product/23ai/dbhomeFree' >> /etc/profile.d/oraenv.sh
+echo 'ORACLE_BASE=/opt/oracle' >> /etc/profile.d/oraenv.sh
+echo 'LD_LIBRARY_PATH=/opt/oracle/product/23ai/dbhomeFree/lib' >> /etc/profile.d/oraenv.sh
+echo 'ORDS_HOME=/opt/oracle/ords' >> /etc/profile.d/oraenv.sh
+echo 'ORDS_CONFIG=/opt/oracle/ords/config' >> /etc/profile.d/oraenv.sh
+echo 'ORDS_LOGS=/opt/oracle/ords/config/logs' >> /etc/profile.d/oraenv.sh
+echo 'PATH=$PATH:$ORACLE_HOME/bin:$HOME/bin:$ORDS_HOME/bin' >> /etc/profile.d/oraenv.sh
+
+echo '. /usr/local/bin/oraenv -s' >> /etc/profile.d/oraenv.sh
+
+chmod ugo+x /etc/profile.d/oraenv.sh
+
+oracle
+nano /opt/oracle/product/23ai/dbhomeFree/network/admin/tnsnames.ora
+
+FREE =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = localhost)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = FREE)
+    )
+  )
+
+LISTENER_FREE =
+  (ADDRESS = (PROTOCOL = TCP)(HOST = localhost)(PORT = 1521))
+
+FREEPDB1 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = localhost)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = FREEPDB1)
+    )
+  )
+
+
+nano /opt/oracle/product/23ai/dbhomeFree/network/admin/listener.ora
+DEFAULT_SERVICE_LISTENER = FREE
+
+LISTENER =
+  (DESCRIPTION_LIST =
+    (DESCRIPTION =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 0.0.0.0)(PORT = 1521))
+      (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
+    )
+  )
+
+
+root  
+systemctl daemon-reload
+systemctl enable oracle-free-23ai
+
+
+oracle
+sqlplus / as sysdba
+-------------------------------------------------------------------
+ alter session set container=FREEPDB1;
+
+create tablespace audit_trail 
+datafile '/opt/oracle/oradata/FREE/FREEPDB1/audit01.dbf' size 100m 
+autoextend on next 100m maxsize 1g;
+
+begin
+dbms_audit_mgmt.set_audit_trail_location(
+   audit_trail_type=>dbms_audit_mgmt.audit_trail_aud_std,
+   audit_trail_location_value=>'AUDIT_TRAIL');
+end;
+/
+
+begin
+dbms_audit_mgmt.set_audit_trail_location(
+   audit_trail_type=>dbms_audit_mgmt.audit_trail_fga_std,
+   audit_trail_location_value=>'AUDIT_TRAIL');
+end;
+/
+begin
+dbms_audit_mgmt.set_audit_trail_location(
+   audit_trail_type=>dbms_audit_mgmt.audit_trail_db_std,
+   audit_trail_location_value=>'AUDIT_TRAIL');
+end;
+/
+begin
+dbms_audit_mgmt.set_audit_trail_location(
+   audit_trail_type=>dbms_audit_mgmt.audit_trail_unified,
+   audit_trail_location_value=>'AUDIT_TRAIL');
+end;
+/
+
+exec dbms_workload_repository.modify_baseline_window_size(window_size =>3); 
+exec dbms_workload_repository.modify_snapshot_settings(retention=>3*1440);
+
+exec dbms_stats.alter_stats_history_retention(3);
+exec dbms_scheduler.set_scheduler_attribute('log_history',3);
+
+begin
+dbms_audit_mgmt.set_last_archive_timestamp(
+   audit_trail_type=>dbms_audit_mgmt.audit_trail_unified,
+   last_archive_time=>sysdate-3);
+end;
+/
+
+-- Purge manuale dei dati di audit più vecchi del timestamp da mettere in un job
+begin
+   dbms_audit_mgmt.purge_audit_trail(
+      audit_trail_type => dbms_audit_mgmt.audit_trail_unified,
+      use_last_arch_timestamp => true);
+end;
+/
+
+-- job
+begin
+   dbms_scheduler.create_job (
+      job_name        => 'PURGE_AUDIT_TRAIL_JOB',
+      job_type        => 'PLSQL_BLOCK',
+      job_action      => 'begin 
+                            dbms_audit_mgmt.purge_audit_trail(
+                               audit_trail_type => dbms_audit_mgmt.audit_trail_unified,
+                               use_last_arch_timestamp => true);
+                          end;',
+      start_date      => sysdate,
+      repeat_interval => 'FREQ=WEEKLY; BYDAY=SUN; BYHOUR=2; BYMINUTE=0; BYSECOND=0', -- Ogni domenica alle 2:00 AM ma con 3 giorni impostare a 3
+      enabled         => true,
+      comments        => 'Job per purgare i dati di audit unificato');
+end;
+/
+
+
+create bigfile tablespace apex242 
+datafile '/opt/oracle/oradata/FREE/FREEPDB1/apex242.dbf' size 100m 
+autoextend on next 100m maxsize 3g;
+
+
+--create bigfile tablespace users2 datafile '/opt/oracle/oradata/FREE/FREEPDB1/users.dbf' size 100m
+--autoextend on next 100m maxsize 8g; -- non 12
+
+--alter database default tablespace users2;
+
+--drop tablespace users including contents and datafiles;
+
+--alter tablespace users2 rename to users;
+
+--select tablespace_name,bigfile from dba_tablespaces;
+
+alter tablespace USERS
+default table compress for oltp
+index compress advanced low;
+
+alter system set db_index_compression_inheritance = TABLESPACE scope=both;
+
+-------------------------------------------------------------------
+
+cd /home/oracle
+rm apex-latest.zip* -rf
+rm -rf apex
+wget https://download.oracle.com/otn_software/apex/apex-latest.zip
+unzip apex-latest.zip
+cp -a /home/oracle/apex/ /opt/oracle/apex/
+
+cd /opt/oracle/apex/
+
+sqlplus / as sysdba
+-------------------------------------------------------------------
+alter session set container=FREEPDB1;
+@apexins APEX242 APEX242 TEMP /i/
+@apex_rest_config.sql
+APEX_LISTENER List123
+APEX_REST_PUBLIC_USER List123
+
+@apxchpwd.sql
+ADMIN ADMIN Oracle123!
+alter profile default limit password_life_time unlimited;
+
+alter user apex_public_user account unlock;
+alter user apex_public_user identified by "APEX_PUBLIC_USER";
+
+BEGIN
+    DBMS_NETWORK_ACL_ADMIN.APPEND_HOST_ACE(
+        host => '*',
+        ace => xs$ace_type(privilege_list => xs$name_list('connect'),
+                           principal_name => 'APEX_240200',
+                           principal_type => xs_acl.ptype_db));
+END;
+/
+
+SELECT VALUE FROM v$parameter WHERE NAME = 'job_queue_processes';
+ALTER SYSTEM SET JOB_QUEUE_PROCESSES = 200 scope=both; -- da controllare il numero massimo corretto
+
+CREATE USER USER1 IDENTIFIED BY "Oracle123"  
+DEFAULT TABLESPACE "USERS"
+TEMPORARY TABLESPACE "TEMP";
+
+-- QUOTAS
+ALTER USER USER1 QUOTA UNLIMITED ON "USERS";
+
+GRANT 
+  CREATE CLUSTER,
+  CREATE DIMENSION,
+  CREATE INDEXTYPE,
+  CREATE JOB,
+  CREATE MATERIALIZED VIEW,
+  CREATE MLE,
+  CREATE OPERATOR,
+  CREATE PROCEDURE,
+  CREATE PROPERTY GRAPH,
+  CREATE SEQUENCE,
+  CREATE SESSION,
+  CREATE SYNONYM,
+  CREATE TABLE,
+  CREATE TRIGGER,
+  CREATE TYPE,
+  CREATE VIEW,
+  EXECUTE DYNAMIC MLE
+TO USER1;
+
+
+-- workspace APEX ADMIN Oracle123!
+-------------------------------------------------------------------
+
+cd /opt/oracle/apex/builder/it
+
+sqlplus / as sysdba
+-------------------------------------------------------------------
+alter session set container=FREEPDB1;
+alter session set current_schema = APEX_240200; 
+@load_it.sql
+ -------------------------------------------------------------------
+
+cd /opt/oracle/apex/utilities
+sqlplus / as sysdba
+-------------------------------------------------------------------
+alter session set container=FREEPDB1;
+@reset_image_prefix.sql
+https://static.oracle.com/cdn/apex/24.2.4/
+-------------------------------------------------------------------
+
+java 17
+https://mega.nz/file/RV4iUKyY#u3rSZEaOHhl93A_-YGNjUkctcAxYziW1PplVu18-jLE
+
+root
+cd /tmp
+wget https://yum.oracle.com/repo/OracleLinux/OL9/oracle/software/x86_64/getPackage/ords-24.4.0-6.el9.noarch.rpm
+rpm -i ords*.rpm
+ords --config /etc/ords/config install
+TNS location /opt/oracle/product/23ai/dbhomeFree/network/admin/
+2 sys Oracle123 
+  3 S Ords123 (Password ORDS) in tablespace dati
+  5 1 (Funzione Aggiuntiva: tutte)
+  9 /opt/oracle/apex/images (Posizione Risorse Statiche APEX)
+  A
+
+
+nano /etc/ords/config/global/settings.xml
+--aggiungere
+<entry key="jdbc.InitialLimit">10</entry>
+<entry key="jdbc.MinLimit">1</entry>
+<entry key="jdbc.MaxLimit">200</entry>
+
+APEX ADMIN Oracle123!
+
+ systemctl start ords
+ systemctl enable ords
+
+http://192.168.1.239:8080/ords
+
+--creare workspace con USER1 ADMIN Oracle123!!! -> Oracle123!
+
+
+
+
+
+mkdir -p /opt/oracle/oradata/FREE/FREEPDB1/expdp
+
+sqlplus / as sysdba
+-------------------------------------------------------------------
+alter session set container = FREEPDB1;
+CREATE OR REPLACE DIRECTORY EXPDP as '/opt/oracle/oradata/FREE/FREEPDB1/expdp';
+
+
+-------------------------------------------------------------------
+
+cd /opt/oracle
+nano make_expdp.sh
+
+#!/bin/bash
+export PATH=/usr/local/bin:${PATH}
+export ORACLE_SID=FREE
+export ORAENV_ASK=NO
+. oraenv
+export DB=${1}
+su - oracle -c "expdp \'sys/Oracle123@${DB} as sysdba\' DIRECTORY=EXPDP DUMPFILE=${DB}_oracle_backup.dmp LOGFILE=${DB}_oracle_backup.log FULL=YES REUSE_DUMPFILES=YES"
+
+
+chmod u+x make_expdp.sh
+
+cd /opt/oracle
+nano make_impdp.sh
+
+#!/bin/bash
+export PATH=/usr/local/bin:${PATH}
+export ORACLE_SID=FREE
+export ORAENV_ASK=NO
+. oraenv
+export DB=${1}
+su - oracle -c "impdp \'sys/Oracle123@${DB} as sysdba\' DIRECTORY=EXPDP DUMPFILE=${DB}_oracle_backup.dmp LOGFILE=${DB}_oracle_backup.log FULL=YES"
+
+
+chmod u+x make_impdp.sh
+
+crontab -e
+
+00 21 * * * /opt/oracle/make_expdp.sh FREEPDB1
