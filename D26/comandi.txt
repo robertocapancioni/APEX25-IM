@@ -1,0 +1,178 @@
+lsnrctl status
+lsnrctl start
+lsnrctl stop    
+lsnrctl reload
+lsnrctl services
+
+Dove si trovano i file di configurazione principali
+
+$ORACLE_HOME/network/admin/
+
+cat $ORACLE_HOME/network/admin/listener.ora
+cat $ORACLE_HOME/network/admin/sqlnet.ora
+"La direttiva NAMES.DIRECTORY_PATH specifica l'ordine dei metodi di risoluzione dei nomi da usare per connettersi a un database."
+
+In questo caso:
+
+TNSNAMES: cerca nel file tnsnames.ora
+
+EZCONNECT: usa la connessione semplificata (es. user@hostname:port/service)
+
+
+sqlplus / as sysdba
+sqlplus sys@localhost:1521/freepdb1 as sysdba
+sqlplus sys@freepdb1 as sysdba
+
+select instance_name from v$instance;
+
+
+$ORACLE_HOME/dbs/
+
+
+$ORACLE_HOME/dbs/init*.ora (init file)
+
+$ORACLE_BASE/diag per i log
+
+
+SHOW CON_NAME;
+
+SHOW CON_ID;
+SHOW PARAMETER spfile;
+SHOW PARAMETER pfile;
+
+
+STARTUP PFILE='$ORACLE_HOME/dbs/initmytest.ora';
+
+initmytest.ora
+SPFILE = '/opt/oracle/product/23c/dbhomeFree/dbs/spfileFREE.ora'
+
+CREATE PFILE='/tmp/init_manual.ora' FROM SPFILE;
+STARTUP PFILE='/tmp/init_manual.ora';
+CREATE SPFILE FROM PFILE='/tmp/init_manual.ora';
+
+ALTER SYSTEM SET <parametro>=<valore> [SCOPE = ...] [SID = ...];
+
+
+SCOPE | Effetto | Usa SPFILE? | Riavvio richiesto?
+MEMORY | Solo RAM, valido fino al riavvio | ❌ | ❌
+SPFILE | Solo file SPFILE, valido dopo il riavvio | ✅ | ✅
+BOTH | RAM + SPFILE | ✅ | ❌
+
+
+SHOW PARAMETER open_cursors ;
+ALTER SYSTEM SET open_cursors = 500 SCOPE=MEMORY;
+
+ALTER SYSTEM SET open_cursors = 500 SCOPE=SPFILE;
+
+ALTER SESSION SET CONTAINER=FREEPDB1;
+CONNECT sys@localhost:1521/freepdb1 AS sysdba;
+
+SELECT name, value, con_id 
+FROM v$parameter 
+WHERE name = 'open_cursors';
+
+non tutto è modificabile nel PDB
+
+SELECT name FROM v$parameter WHERE ispdb_modifiable = 'TRUE';
+
+
+
+
+
+SHOW CON_NAME;
+SELECT pdb_name, status FROM dba_pdbs;
+
+ALTER PLUGGABLE DATABASE ALL OPEN;
+-- oppure
+ALTER PLUGGABLE DATABASE freepdb1 OPEN;
+
+SELECT name FROM v$datafile;
+SELECT name FROM v$tempfile;
+SELECT name FROM v$tablespace;
+
+SHOW PARAMETER control_files;
+SELECT group#, member FROM v$logfile;
+SELECT tablespace_name, file_name, bytes/1024/1024 AS size_MB 
+FROM dba_data_files;
+SELECT sid, serial#, username, status FROM v$session WHERE username IS NOT NULL;
+SELECT * FROM v$diag_alert_ext WHERE originating_timestamp > SYSDATE - 1/24;
+
+
+-- ==========================================================================
+-- Script: analisi_spazio.sql
+-- Scopo: Analisi dello spazio a livello di tablespace e segmenti in Oracle
+-- Compatibile con: Oracle 12c, 19c, 21c, 23c
+-- ==========================================================================
+
+-- 1. Visualizzare lo spazio LIBERO in ciascun tablespace
+PROMPT === 1. Spazio libero per tablespace (in MB) ===
+SELECT 
+  tablespace_name,
+  ROUND(SUM(bytes)/1024/1024, 2) AS free_mb
+FROM 
+  dba_free_space
+GROUP BY 
+  tablespace_name
+ORDER BY 
+  free_mb DESC;
+
+-- 2. Visualizzare lo spazio OCCUPATO da segmenti in ciascun tablespace
+PROMPT === 2. Spazio occupato da segmenti (in MB) ===
+SELECT 
+  tablespace_name,
+  ROUND(SUM(bytes)/1024/1024, 2) AS used_mb
+FROM 
+  dba_segments
+GROUP BY 
+  tablespace_name
+ORDER BY 
+  used_mb DESC;
+
+-- 3. Riepilogo totale per ogni tablespace: totale, occupato, libero
+PROMPT === 3. Spazio totale, usato e libero per tablespace (in MB) ===
+SELECT
+  df.tablespace_name,
+  ROUND(SUM(df.bytes)/1024/1024, 2) AS total_mb,
+  ROUND(SUM(NVL(fs.bytes, 0))/1024/1024, 2) AS free_mb,
+  ROUND(SUM(df.bytes - NVL(fs.bytes, 0))/1024/1024, 2) AS used_mb
+FROM 
+  dba_data_files df
+LEFT JOIN 
+  dba_free_space fs 
+ON 
+  df.tablespace_name = fs.tablespace_name
+GROUP BY 
+  df.tablespace_name
+ORDER BY 
+  total_mb DESC;
+
+-- 4. Analisi di uno specifico oggetto (segmento)
+-- Sostituire 'NOME_TABELLA' e 'NOME_SCHEMA' con i valori desiderati
+PROMPT === 4. Spazio occupato da un oggetto specifico (segmento) ===
+SELECT 
+  segment_name,
+  segment_type,
+  ROUND(bytes/1024/1024, 2) AS size_mb
+FROM 
+  dba_segments
+WHERE 
+  segment_name = UPPER('NOME_TABELLA')  -- ← Modificare qui
+  AND owner = UPPER('NOME_SCHEMA');     -- ← Modificare qui
+
+-- 5. Analisi estensione: numero di extent e dimensione del più grande blocco libero
+PROMPT === 5. Numero di extent liberi e dimensione massima blocco libero ===
+SELECT 
+  tablespace_name, 
+  COUNT(*) AS num_extents,
+  ROUND(MAX(bytes)/1024/1024, 2) AS largest_free_extent_mb
+FROM 
+  dba_free_space
+GROUP BY 
+  tablespace_name
+ORDER BY 
+  largest_free_extent_mb DESC;
+
+-- ==========================================================================
+-- Fine script - può essere eseguito in SQL*Plus o SQL Developer
+-- ==========================================================================
+
