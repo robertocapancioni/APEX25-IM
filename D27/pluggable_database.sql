@@ -71,7 +71,7 @@ CREATE PLUGGABLE DATABASE mio_pdb_new
   );
 
 -- Apertura del PDB in modalità READ WRITE
-ALTER PLUGGABLE DATABASE mio_pdb OPEN READ WRITE;
+ALTER PLUGGABLE DATABASE mio_pdb_new OPEN READ WRITE;
 
 ------------------------------------------------------------
 
