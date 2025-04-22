@@ -63,7 +63,7 @@ CREATE PLUGGABLE DATABASE mio_pdb
 mkdir /opt/oracle/oradata/FREE/mio_pdb_new
 
 
-CREATE PLUGGABLE DATABASE mio_pdb
+CREATE PLUGGABLE DATABASE mio_pdb_new
   USING '/opt/oracle/oradata/FREE/mio_pdb.xml'                  -- XML creato con UNPLUG
   FILE_NAME_CONVERT = (
     '/opt/oracle/oradata/FREE/mio_pdb',                        -- percorso originario dei file
