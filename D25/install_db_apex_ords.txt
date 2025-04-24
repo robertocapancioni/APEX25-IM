@@ -302,6 +302,7 @@ https://mega.nz/file/kUZXkZxI#W707F1ciSEvousLrSSIHW8IPcUyVBqAP4oES4NvXuiQ
 root
 cd /tmp
 wget https://yum.oracle.com/repo/OracleLinux/OL9/oracle/software/x86_64/getPackage/ords-24.4.0-6.el9.noarch.rpm
+wget https://yum.oracle.com/repo/OracleLinux/OL9/oracle/software/x86_64/getPackage/ords-25.1.0-12.el9.noarch.rpm
 rpm -i ords*.rpm
 ords --config /etc/ords/config install
 TNS location /opt/oracle/product/23ai/dbhomeFree/network/admin/
